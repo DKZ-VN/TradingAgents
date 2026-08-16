@@ -4,7 +4,7 @@ Nguồn: `docs/KV_AI_MT5_EA_SPEC_v1.1.md`. Cột **Trạng thái** chỉ đượ
 
 | REQ ID | Yêu cầu (spec §) | Test case | Vị trí test | Trạng thái | Bằng chứng |
 |---|---|---|---|---|---|
-| REQ-BUILD-01 | EA biên dịch 0 error/0 warning (§10) | CI job `mql5-compile` | `.github/workflows/kv-ai-mt5.yml` | TODO | — |
+| REQ-BUILD-01 | EA biên dịch 0 error/0 warning (§10) | CI job `mql5-compile` | `.github/workflows/kv-ai-mt5.yml` | BLOCKED | Run `31922348133` fail ngay lập tức, không cấp runner (BUG-002 trong BUG_LOG.md) — cần chủ dự án kiểm tra Actions/billing settings của repo |
 | REQ-SIG-01 | 3 chế độ tín hiệu DAVIT_ONLY/AI_ONLY/COMBINED (§1) | `Scripts/KV_AI/tests/test_signal_router.mq5` | M3 | TODO | — |
 | REQ-SIG-02 | COMBINED chỉ vào lệnh khi 2 nguồn đồng thuận (§1) | test_signal_router.mq5 | M3 | TODO | — |
 | REQ-PIVOT-01 | Pivot Davit placeholder tính đúng công thức Classic/Fibonacci (§12.1) | `mt5_ai_service/tests/test_davit_pivot.py` (đối chiếu song song với MQL5) | M1/M2 | TODO | — |
