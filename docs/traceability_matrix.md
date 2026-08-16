@@ -5,8 +5,8 @@ Nguồn: `docs/KV_AI_MT5_EA_SPEC_v1.1.md`. Cột **Trạng thái** chỉ đượ
 | REQ ID | Yêu cầu (spec §) | Test case | Vị trí test | Trạng thái | Bằng chứng |
 |---|---|---|---|---|---|
 | REQ-BUILD-01 | EA biên dịch 0 error/0 warning (§10) | CI job `mql5-compile` | `.github/workflows/kv-ai-mt5.yml` | BLOCKED | Run `31922348133` fail ngay lập tức, không cấp runner (BUG-002 trong BUG_LOG.md) — cần chủ dự án kiểm tra Actions/billing settings của repo |
-| REQ-SIG-01 | 3 chế độ tín hiệu DAVIT_ONLY/AI_ONLY/COMBINED (§1) | `Scripts/KV_AI/tests/test_signal_router.mq5` | M3 | TODO | — |
-| REQ-SIG-02 | COMBINED chỉ vào lệnh khi 2 nguồn đồng thuận (§1) | test_signal_router.mq5 | M3 | TODO | — |
+| REQ-SIG-01 | 3 chế độ tín hiệu DAVIT_ONLY/AI_ONLY/COMBINED (§1) | `RouteSignal()` trong `SignalRouter.mqh` + review thủ công | M3 | PARTIAL | Code viết xong theo đúng bảng chân trị ở §1, **chưa biên dịch được** — chặn bởi BUG-002. Script test MQL5 thật (`test_signal_router.mq5`) sẽ thêm ở M3.1 sau khi CI thông |
+| REQ-SIG-02 | COMBINED chỉ vào lệnh khi 2 nguồn đồng thuận (§1) | `RouteSignal()` trong `SignalRouter.mqh` | M3 | PARTIAL | Như trên |
 | REQ-PIVOT-01 | Pivot Davit placeholder tính đúng công thức Classic/Fibonacci (§12.1) | `mt5_ai_service/tests/test_davit_pivot.py` (đối chiếu song song với MQL5) | M1/M2 | PARTIAL | Python: PASS thật (`pytest -q` → 5 passed, chạy 2026-08-16 trong sandbox). MQL5 `PivotDavit.mqh`: đã viết cùng công thức, **chưa biên dịch/test được** — chặn bởi BUG-002 (CI GitHub Actions) |
 | REQ-PIVOT-02 | Interface CalcPivot() tách rời, hoán đổi không sửa EA (§12.1) | code review thủ công | M1 | PASS | Review thủ công: `SPivotLevels` struct + hàm `CalcPivot()` là điểm hoán đổi duy nhất, EA/caller khác không phụ thuộc nội dung công thức bên trong |
 | REQ-AI-01 | Request JSON đúng schema §4.2 | `test_schemas.py::test_signal_request_round_trip` | M2 | PASS | `pytest -q` → 25 passed (chạy 2026-08-16, mt5_ai_service) |
@@ -21,7 +21,7 @@ Nguồn: `docs/KV_AI_MT5_EA_SPEC_v1.1.md`. Cột **Trạng thái** chỉ đượ
 | REQ-AI-10 | Reject schema_version không khớp | `test_malformed_responses.py::test_schema_version_mismatch` | M2 | PASS | như trên |
 | REQ-AI-10b | Reject request_id không khớp (round-trip an toàn) | `test_malformed_responses.py::test_request_id_mismatch` | M2 | PASS | như trên |
 | REQ-AI-10c | Endpoint /v1/signal trả 502 khi provider trả JSON hỏng, thay vì rò rỉ dữ liệu xấu cho EA | `test_app.py::test_signal_returns_502_on_malformed_provider_output` | M2 | PASS | như trên |
-| REQ-AI-11 | EA fallback HOLD khi AI lỗi, không suy ra BUY/SELL (§4.4) | `test_signal_router.mq5::test_ai_error_fallback_hold` | M3 | TODO | — |
+| REQ-AI-11 | EA fallback HOLD khi AI lỗi, không suy ra BUY/SELL (§4.4) | `RequestAiSignal()` trả false + `RouteSignal()` COMBINED ép HOLD khi `aiValid=false` | M3 | PARTIAL | Code viết xong (`AiSignalClient.mqh`, `SignalRouter.mqh`), **chưa biên dịch được** — chặn bởi BUG-002 |
 | REQ-RISK-01 | Stop-risk per-trade cap chặn lệnh vượt ngưỡng (§5.2.1) | `test_risk_manager.mq5::test_stop_risk_cap` | M4 | TODO | — |
 | REQ-RISK-02 | Margin cap dùng OrderCalcMargin thực tế (§5.2.2) | `test_risk_manager.mq5::test_margin_cap` | M4 | TODO | — |
 | REQ-RISK-03 | Total-risk cap tính đúng khi có nhiều vị thế mở (§5.2.3) | `test_risk_manager.mq5::test_total_risk_cap` | M4 | TODO | — |

@@ -20,6 +20,8 @@ enum ENUM_VOLUME_MODE
    VOLUME_MODE_RISK_PERCENT_CAPPED_KELLY = 2
   };
 
+#include "../../Include/KV_AI/SignalRouter.mqh"
+
 input string            InpSymbol               = "XAUUSD";
 input ENUM_SIGNAL_MODE  InpSignalMode           = SIGNAL_MODE_COMBINED;
 input ENUM_VOLUME_MODE  InpVolumeMode           = VOLUME_MODE_RISK_PERCENT;
@@ -50,7 +52,7 @@ int OnInit()
       return(INIT_PARAMETERS_INCORRECT);
      }
 
-   Print("KV_AI_EA: initialized (M0 skeleton) symbol=", InpSymbol,
+   Print("KV_AI_EA: initialized symbol=", InpSymbol,
          " mode=", EnumToString(InpSignalMode),
          " volumeMode=", EnumToString(InpVolumeMode));
    return(INIT_SUCCEEDED);
@@ -63,14 +65,32 @@ void OnDeinit(const int reason)
   }
 
 //+------------------------------------------------------------------+
+//| M3: computes and logs the routed signal every tick. No order      |
+//| execution yet - RiskManager/RolloverGuard/OrderGuard land in      |
+//| M4-M6 per docs/KV_AI_MT5_EA_SPEC_v1.1.md before any OrderSend().  |
+//+------------------------------------------------------------------+
 void OnTick()
   {
-// M0 skeleton: no trading logic yet. Signal routing, risk sizing,
-// rollover guard and order guard land in M1-M6 per docs/KV_AI_MT5_EA_SPEC_v1.1.md.
-   if(TimeCurrent() - g_lastHeartbeat >= 60)
-     {
-      g_lastHeartbeat = TimeCurrent();
-      Print("KV_AI_EA: heartbeat, symbol=", InpSymbol, " bid=", SymbolInfoDouble(InpSymbol, SYMBOL_BID));
-     }
+   if(TimeCurrent() - g_lastHeartbeat < 60)
+      return;
+   g_lastHeartbeat = TimeCurrent();
+
+   double bid = SymbolInfoDouble(InpSymbol, SYMBOL_BID);
+
+   SPivotLevels levels;
+   bool havePivot = CalcPivot(InpSymbol, TimeCurrent(), levels);
+   ENUM_TRADE_SIGNAL davitSignal = havePivot ? DavitSignalFromPivot(bid, levels) : TRADE_SIGNAL_HOLD;
+
+   SAiSignal aiSignal;
+   bool haveAi = false;
+   if(InpSignalMode == SIGNAL_MODE_AI_ONLY || InpSignalMode == SIGNAL_MODE_COMBINED)
+      haveAi = RequestAiSignal(InpAiServiceUrl, InpSymbol, "H1", 50, InpAiTimeoutMs, InpMaxSignalAgeSec,
+                                "NONE", 0.0, 0.0, aiSignal);
+
+   ENUM_TRADE_SIGNAL routed = RouteSignal(InpSignalMode, davitSignal, haveAi,
+                                           haveAi ? AiSignalToTradeSignal(aiSignal.signal) : TRADE_SIGNAL_HOLD);
+
+   PrintFormat("KV_AI_EA: heartbeat symbol=%s bid=%.5f davit=%d aiValid=%s routed=%d",
+               InpSymbol, bid, (int)davitSignal, haveAi ? "true" : "false", (int)routed);
   }
 //+------------------------------------------------------------------+
