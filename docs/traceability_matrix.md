@@ -9,16 +9,18 @@ Nguồn: `docs/KV_AI_MT5_EA_SPEC_v1.1.md`. Cột **Trạng thái** chỉ đượ
 | REQ-SIG-02 | COMBINED chỉ vào lệnh khi 2 nguồn đồng thuận (§1) | test_signal_router.mq5 | M3 | TODO | — |
 | REQ-PIVOT-01 | Pivot Davit placeholder tính đúng công thức Classic/Fibonacci (§12.1) | `mt5_ai_service/tests/test_davit_pivot.py` (đối chiếu song song với MQL5) | M1/M2 | PARTIAL | Python: PASS thật (`pytest -q` → 5 passed, chạy 2026-08-16 trong sandbox). MQL5 `PivotDavit.mqh`: đã viết cùng công thức, **chưa biên dịch/test được** — chặn bởi BUG-002 (CI GitHub Actions) |
 | REQ-PIVOT-02 | Interface CalcPivot() tách rời, hoán đổi không sửa EA (§12.1) | code review thủ công | M1 | PASS | Review thủ công: `SPivotLevels` struct + hàm `CalcPivot()` là điểm hoán đổi duy nhất, EA/caller khác không phụ thuộc nội dung công thức bên trong |
-| REQ-AI-01 | Request JSON đúng schema §4.2 | `test_schemas.py` | M2 | TODO | — |
-| REQ-AI-02 | Response JSON đúng schema §4.3 | `test_schemas.py` | M2 | TODO | — |
-| REQ-AI-03 | Reject thiếu field | `test_malformed_responses.py::test_missing_field` | M2 | TODO | — |
-| REQ-AI-04 | Reject sai kiểu dữ liệu | `test_malformed_responses.py::test_wrong_type` | M2 | TODO | — |
-| REQ-AI-05 | Reject confidence ngoài [0,1] | `test_malformed_responses.py::test_confidence_out_of_range` | M2 | TODO | — |
-| REQ-AI-06 | Reject JSON rỗng/không parse được | `test_malformed_responses.py::test_empty_or_invalid_json` | M2 | TODO | — |
-| REQ-AI-07 | Reject HTTP 500 / lỗi provider | `test_malformed_responses.py::test_provider_5xx` | M2 | TODO | — |
-| REQ-AI-08 | Reject timeout | `test_malformed_responses.py::test_timeout` | M2 | TODO | — |
-| REQ-AI-09 | Reject expiry_ts đã qua (stale) | `test_malformed_responses.py::test_stale_expiry` | M2 | TODO | — |
-| REQ-AI-10 | Reject schema_version không khớp | `test_malformed_responses.py::test_schema_version_mismatch` | M2 | TODO | — |
+| REQ-AI-01 | Request JSON đúng schema §4.2 | `test_schemas.py::test_signal_request_round_trip` | M2 | PASS | `pytest -q` → 25 passed (chạy 2026-08-16, mt5_ai_service) |
+| REQ-AI-02 | Response JSON đúng schema §4.3 | `test_schemas.py::test_signal_response_round_trip` | M2 | PASS | như trên |
+| REQ-AI-03 | Reject thiếu field | `test_malformed_responses.py::test_missing_field` | M2 | PASS | như trên |
+| REQ-AI-04 | Reject sai kiểu dữ liệu | `test_malformed_responses.py::test_wrong_type` | M2 | PASS | như trên |
+| REQ-AI-05 | Reject confidence ngoài [0,1] | `test_malformed_responses.py::test_confidence_out_of_range` | M2 | PASS | như trên |
+| REQ-AI-06 | Reject JSON rỗng/không parse được | `test_malformed_responses.py::test_empty_json`, `test_invalid_json_garbage` | M2 | PASS | như trên |
+| REQ-AI-07 | Reject HTTP 500 / lỗi provider | `test_app.py::test_signal_returns_502_on_provider_exception` | M2 | PASS | như trên |
+| REQ-AI-08 | Reject timeout | `test_app.py::test_signal_returns_504_on_provider_timeout` | M2 | PASS | như trên |
+| REQ-AI-09 | Reject expiry_ts đã qua (stale) | `test_malformed_responses.py::test_stale_expiry`, `test_stale_generated_at_even_with_future_expiry` | M2 | PASS | như trên |
+| REQ-AI-10 | Reject schema_version không khớp | `test_malformed_responses.py::test_schema_version_mismatch` | M2 | PASS | như trên |
+| REQ-AI-10b | Reject request_id không khớp (round-trip an toàn) | `test_malformed_responses.py::test_request_id_mismatch` | M2 | PASS | như trên |
+| REQ-AI-10c | Endpoint /v1/signal trả 502 khi provider trả JSON hỏng, thay vì rò rỉ dữ liệu xấu cho EA | `test_app.py::test_signal_returns_502_on_malformed_provider_output` | M2 | PASS | như trên |
 | REQ-AI-11 | EA fallback HOLD khi AI lỗi, không suy ra BUY/SELL (§4.4) | `test_signal_router.mq5::test_ai_error_fallback_hold` | M3 | TODO | — |
 | REQ-RISK-01 | Stop-risk per-trade cap chặn lệnh vượt ngưỡng (§5.2.1) | `test_risk_manager.mq5::test_stop_risk_cap` | M4 | TODO | — |
 | REQ-RISK-02 | Margin cap dùng OrderCalcMargin thực tế (§5.2.2) | `test_risk_manager.mq5::test_margin_cap` | M4 | TODO | — |
