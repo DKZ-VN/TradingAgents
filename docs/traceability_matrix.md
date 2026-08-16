@@ -7,8 +7,8 @@ Nguồn: `docs/KV_AI_MT5_EA_SPEC_v1.1.md`. Cột **Trạng thái** chỉ đượ
 | REQ-BUILD-01 | EA biên dịch 0 error/0 warning (§10) | CI job `mql5-compile` | `.github/workflows/kv-ai-mt5.yml` | BLOCKED | Run `31922348133` fail ngay lập tức, không cấp runner (BUG-002 trong BUG_LOG.md) — cần chủ dự án kiểm tra Actions/billing settings của repo |
 | REQ-SIG-01 | 3 chế độ tín hiệu DAVIT_ONLY/AI_ONLY/COMBINED (§1) | `Scripts/KV_AI/tests/test_signal_router.mq5` | M3 | TODO | — |
 | REQ-SIG-02 | COMBINED chỉ vào lệnh khi 2 nguồn đồng thuận (§1) | test_signal_router.mq5 | M3 | TODO | — |
-| REQ-PIVOT-01 | Pivot Davit placeholder tính đúng công thức Classic/Fibonacci (§12.1) | `mt5_ai_service/tests/test_davit_pivot.py` (đối chiếu song song với MQL5) | M1/M2 | TODO | — |
-| REQ-PIVOT-02 | Interface CalcPivot() tách rời, hoán đổi không sửa EA (§12.1) | code review thủ công | M1 | TODO | — |
+| REQ-PIVOT-01 | Pivot Davit placeholder tính đúng công thức Classic/Fibonacci (§12.1) | `mt5_ai_service/tests/test_davit_pivot.py` (đối chiếu song song với MQL5) | M1/M2 | PARTIAL | Python: PASS thật (`pytest -q` → 5 passed, chạy 2026-08-16 trong sandbox). MQL5 `PivotDavit.mqh`: đã viết cùng công thức, **chưa biên dịch/test được** — chặn bởi BUG-002 (CI GitHub Actions) |
+| REQ-PIVOT-02 | Interface CalcPivot() tách rời, hoán đổi không sửa EA (§12.1) | code review thủ công | M1 | PASS | Review thủ công: `SPivotLevels` struct + hàm `CalcPivot()` là điểm hoán đổi duy nhất, EA/caller khác không phụ thuộc nội dung công thức bên trong |
 | REQ-AI-01 | Request JSON đúng schema §4.2 | `test_schemas.py` | M2 | TODO | — |
 | REQ-AI-02 | Response JSON đúng schema §4.3 | `test_schemas.py` | M2 | TODO | — |
 | REQ-AI-03 | Reject thiếu field | `test_malformed_responses.py::test_missing_field` | M2 | TODO | — |
