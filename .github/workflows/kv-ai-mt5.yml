@@ -1,0 +1,110 @@
+name: KV_AI MT5 EA
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "mt5_ea/**"
+      - "mt5_ai_service/**"
+      - ".github/workflows/kv-ai-mt5.yml"
+  pull_request:
+    paths:
+      - "mt5_ea/**"
+      - "mt5_ai_service/**"
+      - ".github/workflows/kv-ai-mt5.yml"
+
+concurrency:
+  group: kv-ai-mt5-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mql5-compile:
+    name: MQL5 compile (MetaEditor, 0 errors / 0 warnings)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download MetaTrader 5 installer
+        run: |
+          Invoke-WebRequest -Uri "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe" -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+
+      - name: Install MetaTrader 5 (silent, unattended)
+        run: |
+          Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList "/auto" -Wait
+          Start-Sleep -Seconds 15
+          Get-Process terminal64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+
+      - name: Locate metaeditor64.exe
+        id: locate
+        run: |
+          $candidates = @(
+            "C:\Program Files\MetaTrader 5\metaeditor64.exe",
+            "$env:APPDATA\MetaQuotes\Terminal\*\metaeditor64.exe"
+          )
+          $found = $null
+          foreach ($c in $candidates) {
+            $m = Get-Item $c -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($m) { $found = $m.FullName; break }
+          }
+          if (-not $found) {
+            Write-Error "metaeditor64.exe not found after install. Installed tree:"
+            Get-ChildItem "C:\Program Files\MetaTrader 5" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 100
+            exit 1
+          }
+          Write-Host "Found: $found"
+          echo "editor=$found" >> $env:GITHUB_OUTPUT
+
+      - name: Compile KV_AI_EA.mq5
+        run: |
+          $editor = "${{ steps.locate.outputs.editor }}"
+          $src = "$env:GITHUB_WORKSPACE\mt5_ea\Experts\KV_AI\KV_AI_EA.mq5"
+          $log = "$env:GITHUB_WORKSPACE\compile.log"
+          & $editor /compile:"$src" /log:"$log"
+          Start-Sleep -Seconds 3
+          if (-not (Test-Path $log)) {
+            Write-Error "compile.log was not produced by MetaEditor"
+            exit 1
+          }
+          Get-Content -Path $log -Encoding Unicode
+
+      - name: Verify 0 errors / 0 warnings
+        run: |
+          $log = "$env:GITHUB_WORKSPACE\compile.log"
+          $text = Get-Content -Path $log -Encoding Unicode -Raw
+          $errCount = -1
+          $warnCount = -1
+          if ($text -match "(?i)(\d+)\s+error") { $errCount = [int]$Matches[1] }
+          if ($text -match "(?i)(\d+)\s+warning") { $warnCount = [int]$Matches[1] }
+          Write-Host "Parsed errors=$errCount warnings=$warnCount"
+          if ($errCount -ne 0 -or $warnCount -ne 0) {
+            Write-Error "Compile did not report a clean 0 error / 0 warning result. See compile.log above/artifact."
+            exit 1
+          }
+
+      - name: Upload compile log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mql5-compile-log
+          path: compile.log
+          if-no-files-found: warn
+
+  ai-service-tests:
+    name: kv_ai_service pytest + ruff
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mt5_ai_service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install (with dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Run test suite
+        run: pytest -q
+      - name: Lint
+        run: ruff check .
