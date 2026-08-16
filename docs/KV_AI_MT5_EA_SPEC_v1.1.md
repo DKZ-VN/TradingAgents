@@ -226,8 +226,18 @@ Chốt: XAUUSD. Tham số margin/pip-value trong `RiskManager.mqh` dùng `Symbol
 - Không thể điều khiển máy tính vật lý của chủ dự án (không có computer-use) → forward-test demo (mục 8, dòng cuối) chủ dự án phải tự thực hiện, agent chỉ cung cấp EA đã build + hướng dẫn.
 - Mọi lần báo "PASS" trong tài liệu/báo cáo dưới đây đều phải kèm log/artifact thật từ lệnh đã chạy; nếu chưa chạy được sẽ ghi rõ **BLOCKED** kèm lý do, không suy đoán.
 
-## 13. Lịch sử thay đổi tài liệu
+## 13. Roadmap cải tiến (ngoài phạm vi bắt buộc của v1.1)
+
+Các hạng mục dưới đây KHÔNG có trong yêu cầu gốc nhưng được đề xuất bổ sung để tăng an toàn vốn khi chạy tiền thật. Xếp theo mức ưu tiên; thêm vào các milestone sau M6 (chưa có REQ ID/test — sẽ gán khi bắt đầu implement để tránh đánh PASS khống):
+
+1. **News/economic-calendar filter (ưu tiên cao nhất)** — chặn mở lệnh mới trong cửa sổ trước/sau các tin tác động mạnh tới vàng (NFP, FOMC, CPI...). Hiện tại risk cap tính đúng vẫn không chống được gap/slippage bất thường quanh các mốc tin này. Cần nguồn dữ liệu lịch kinh tế (ví dụ ForexFactory calendar) và một `NewsGuard.mqh` tương tự `RolloverGuard.mqh`.
+2. **Kill-switch khẩn cấp** — cờ điều khiển từ xa (file hoặc `GlobalVariable`) để dừng giao dịch/đóng toàn bộ vị thế ngay lập tức mà không cần gỡ EA khỏi chart. Quan trọng cho vận hành tiền thật.
+3. **Ghi log quyết định có cấu trúc** — AI service lưu mỗi tín hiệu (input request + raw provider output + response cuối) vào file/CSV/DB để audit sau này, thay vì chỉ dựa vào `Print()`/log MT5.
+4. **Provider LLM thật** — `StubProvider` hiện tại luôn trả HOLD; cần triển khai `RawSignalProvider` thật gọi một LLM cụ thể trước khi demo/live có ý nghĩa.
+
+## 14. Lịch sử thay đổi tài liệu
 
 | Version | Ngày | Thay đổi |
 |---|---|---|
 | v1.1 | 2026-08-16 | Khởi tạo đặc tả từ đầu (repo trước đó không có tài liệu này) |
+| v1.1 (bổ sung) | 2026-08-16 | Thêm mục 13 (Roadmap cải tiến): news filter, kill-switch, logging quyết định, provider LLM thật |
